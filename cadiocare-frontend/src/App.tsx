@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Login from './Login';
 import Register from './Register';
 import AppLayout from './DoctorDashboard/AppLayout';
+import PatientPortal from './PatientDashboard/PatientPortal'; // Import giao diện dành cho Bệnh nhân
+import AdminPortal from './AdminDashboard/AdminPortal'; // Import giao diện dành cho Quản trị viên (Admin)
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -18,20 +20,31 @@ export default function App() {
   }, []);
 
   const handleLoginSuccess = (token: string, role: string, username: string) => {
+    // Lưu thông tin phiên làm việc vào localStorage
+    localStorage.setItem('access_token', token);
+    localStorage.setItem('user_role', role);
+    localStorage.setItem('username', username);
+    
     setIsAuthenticated(true);
     setUserRole(role);
   };
 
-  // Nếu đã đăng nhập thành công -> Hiển thị Dashboard chính
+  // Nếu đã đăng nhập thành công -> Phân quyền giao diện theo vai trò (RBAC)
   if (isAuthenticated) {
     return (
       <div className="App">
-        <AppLayout />
+        {userRole === 'PATIENT' ? (
+          <PatientPortal />
+        ) : userRole === 'ADMIN' ? (
+          <AdminPortal />
+        ) : (
+          <AppLayout />
+        )}
       </div>
     );
   }
 
-  // Nếu chọn màn hình Đăng ký
+  // Nếu chọn màn hình Đăng ký tài khoản mới
   if (currentView === 'register') {
     return (
       <Register 
@@ -41,7 +54,7 @@ export default function App() {
     );
   }
 
-  // Mặc định hiển thị màn hình Đăng nhập kèm nút chuyển sang Đăng ký
+  // Mặc định hiển thị màn hình Đăng nhập
   return (
     <Login 
       onLoginSuccess={handleLoginSuccess} 

@@ -41,3 +41,26 @@ npm install
 # Khởi động ứng dụng giao diện web
 npm start
 
+## 👥 Danh sách Tài khoản Mẫu Kiểm tra Phân quyền (RBAC Demo)
+
+Để thầy cô và hội đồng thuận tiện kiểm tra các phân hệ chức năng tương ứng với từng vai trò tác nhân, hệ thống thiết lập sẵn 3 tài khoản mẫu sau:
+
+### 1. Phân hệ Bệnh nhân (Patient Portal)
+* **Vai trò:** `PATIENT` (Bệnh nhân ngoại trú)
+* **Tên đăng nhập:** minhquantran
+* **Mật khẩu:** `Lamvlog06`
+* **Chức năng kiểm tra:** Cổng thông tin cá nhân, tự nhập chỉ số sinh hiệu tại nhà (cân nặng, huyết áp), theo dõi lịch sử cảnh báo quá tải dịch và xem lịch hẹn tái khám.
+
+### 2. Phân hệ Bác sĩ / Lâm sàng (Doctor Dashboard)
+* **Vai trò:** `DOCTOR` (Bác sĩ điều trị khoa Tim mạch)
+* **Tên đăng nhập:** `minhquantran06`
+* **Mật khẩu:** `Lamvlog06`
+* **Chức năng kiểm tra:** Quản lý hồ sơ bệnh án, theo dõi chỉ số LVEF, phân độ NYHA, kiểm tra luồng tích hợp ETL (HL7/FHIR), và phê duyệt/điều chỉnh phác đồ 4 trụ cột từ AI-CDSS (*Human-in-the-Loop* với cơ chế lưu vết Audit Log)[cite: 1].
+
+### 3. Phân hệ Quản trị hệ thống (Admin Dashboard)
+* **Vai trò:** `ADMIN` (Quản trị viên hệ thống IT)[cite: 4]
+* **Tên đăng nhập:** `minhquantran2006`
+* **Mật khẩu:** `Lamvlog06`
+* **Chức năng kiểm tra:** Quản lý danh sách tài khoản người dùng, khóa/mở khóa tài khoản, xem ma trận phân quyền RBAC toàn hệ thống, và tra cứu nhật ký kiểm toán y tế (*Audit Logs*)[cite: 1, 4].
+
+---

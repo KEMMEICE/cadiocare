@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Users, 
-  Database, 
-  ShieldCheck, 
-  Bell, 
-  Search, 
-  Menu, 
-  X, 
-  HeartPulse, 
-  ChevronDown 
+import {
+  Users,
+  Database,
+  ShieldCheck,
+  Bell,
+  Search,
+  Menu,
+  X,
+  HeartPulse,
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
-
-
 
 // Import chính xác 3 phân hệ chức năng (Mục 1, Mục 2, Mục 6)
 import PatientRecordManagement from './PatientRecordManagement';
@@ -32,6 +31,7 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabId>('reception');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const navItems: NavItem[] = [
     { 
@@ -181,6 +181,7 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* 1. NÚT CHUÔNG THÔNG BÁO */}
             <button 
               onClick={() => alert('Trung tâm cảnh báo: Có 2 ca Cảnh báo Đỏ quá tải dịch và 1 ca Cảnh báo Vàng.')}
               className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition-colors"
@@ -193,22 +194,49 @@ export default function AppLayout() {
 
             <div className="h-8 w-px bg-slate-200" />
 
-            <div className="flex items-center space-x-3 cursor-pointer group">
-              <img
-                className="h-10 w-10 rounded-xl object-cover ring-2 ring-blue-500/20"
-                src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&auto=format&fit=crop"
-                alt="Avatar Bác sĩ"
-              />
-              <div className="hidden text-left md:block">
-                <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                  BS.CKII Nguyễn Văn An
-                </p>
-                <p className="text-xs text-slate-500">Mã NV: BS-0428 • Khoa Tim Mạch</p>
+            {/* 2. KHU VỰC TÊN BÁC SĨ & ĐĂNG XUẤT */}
+            <div className="relative">
+              <div 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center space-x-3 cursor-pointer group p-1.5 rounded-xl hover:bg-slate-100 transition-all"
+              >
+                <img
+                  className="h-10 w-10 rounded-xl object-cover ring-2 ring-blue-500/20"
+                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&auto=format&fit=crop"
+                  alt="Avatar Bác sĩ"
+                />
+                <div className="hidden text-left md:block">
+                  <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                    BS.CKII Nguyễn Văn An
+                  </p>
+                  <p className="text-xs text-slate-500">Mã NV: BS-0428 • Khoa Tim Mạch</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
+
+              {/* MENU THẢ XUỐNG ĐĂNG XUẤT */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl py-2 z-50">
+                  <div className="px-4 py-2 border-b border-slate-800">
+                    <p className="text-xs text-slate-400">Phiên làm việc</p>
+                    <p className="text-sm font-semibold text-white">Đang hoạt động</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      localStorage.clear(); // Xóa sạch token xác thực
+                      window.location.reload(); // Tải lại trang để về màn hình Login
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Đăng xuất hệ thống</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </header>
+        </header> {/* <-- ĐÃ THÊM THẺ ĐÓNG HEADER CHUẨN XÁC Ở ĐÂY */}
 
         {/* 3. VÙNG RENDER NỘI DUNG TƯƠNG ỨNG VỚI TAB ĐANG CHỌN */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
