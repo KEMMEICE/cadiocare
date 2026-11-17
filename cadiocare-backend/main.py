@@ -19,7 +19,7 @@ app = FastAPI(
     version="2.4.0",
 )
 
-# Cấu hình CORS để cho phép Frontend (React port 3000) gọi API thành công
+# Cấu hình CORS để cho phép Frontend (Vercel & Localhost) gọi API thành công tuyệt đối
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Cho phép mọi nguồn gọi API
@@ -42,31 +42,12 @@ def login_for_access_token(form_data: LoginRequest, db: Session = Depends(get_db
             detail="Tên đăng nhập không tồn tại hoặc tài khoản đã bị khóa.",
         )
     
-    # SỬA TẠI ĐÂY: Dùng verify_password để giải mã và so khớp chính xác với mật khẩu đã đăng ký
+    # Kiểm tra mật khẩu mã hóa bcrypt chính xác
     if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Mật khẩu không chính xác.",
         )
-    
-    # Cấp phát JWT token kèm phân quyền vai trò (role)
-    access_token = create_access_token(data={"sub": user.username, "role": user.role})
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "role": user.role,
-        "username": user.username,
-        "full_name": user.email
-    }
-
-    # Kiểm tra mật khẩu mã hóa bcrypt
-   # Kiểm tra mật khẩu trực tiếp dạng chuỗi thường
-    if user.hashed_password != form_data.password:
-      raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Mật khẩu không chính xác.",
-    )
     
     # Cấp phát JWT token kèm phân quyền vai trò (role)
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
@@ -95,7 +76,6 @@ def register_user(form_data: RegisterRequest, db: Session = Depends(get_db)):
     Tiếp nhận thông tin đăng ký tài khoản (mặc định role là PATIENT),
     kiểm tra trùng lặp, mã hóa mật khẩu bằng bcrypt và lưu vào PostgreSQL.
     """
-    # 1. Kiểm tra xem username đã tồn tại chưa bằng .first() an toàn
     existing_user = db.query(User).filter(User.username == form_data.username).first()
     if existing_user:
         raise HTTPException(
@@ -103,10 +83,8 @@ def register_user(form_data: RegisterRequest, db: Session = Depends(get_db)):
             detail="Tên đăng nhập này đã tồn tại trên hệ thống."
         )
     
-    # 2. Mã hóa mật khẩu bằng hàm băm bảo mật
     hashed_pwd = get_password_hash(form_data.password)
     
-    # 3. Tạo bản ghi User mới
     new_user = User(
         username=form_data.username,
         email=form_data.email,
@@ -115,7 +93,6 @@ def register_user(form_data: RegisterRequest, db: Session = Depends(get_db)):
         is_active=True
     )
     
-    # 4. Lưu vào cơ sở dữ liệu
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
