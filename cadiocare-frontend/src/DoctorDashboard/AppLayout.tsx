@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import {
-  Users,
-  Database,
-  ShieldCheck,
-  Bell,
-  Search,
-  Menu,
-  X,
-  HeartPulse,
-  ChevronDown,
-  LogOut
+import { 
+  Users, 
+  Database, 
+  ShieldCheck, 
+  Bell, 
+  Search, 
+  Menu, 
+  X, 
+  HeartPulse, 
+  ChevronDown, 
+  LogOut,
+  Activity,
+  Stethoscope,
+  HelpCircle
 } from 'lucide-react';
 
-// Import chính xác 3 phân hệ chức năng (Mục 1, Mục 2, Mục 6)
+// Import chính xác các phân hệ chức năng
 import PatientRecordManagement from './PatientRecordManagement';
 import HospitalDataIntegration from './HospitalDataIntegration';
 import AdminSystemDashboard from './AdminSystemDashboard';
@@ -30,30 +33,22 @@ interface NavItem {
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabId>('reception');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const navItems: NavItem[] = [
     { 
       id: 'reception', 
       name: 'Quản lý hồ sơ bệnh án & lượt khám', 
-      numberTag: '1', 
+      numberTag: '01', 
       icon: Users,
       description: 'Tiếp đón, tra cứu hồ sơ và theo dõi lâm sàng'
     },
     { 
       id: 'integration', 
       name: 'Tích hợp và tiền xử lý dữ liệu', 
-      numberTag: '2', 
+      numberTag: '02', 
       icon: Database,
       description: 'ETL Pipeline, đồng bộ HIS/EMR, LIS, PACS'
-    },
-    { 
-      id: 'admin', 
-      name: 'Quản trị hệ thống & dữ liệu dùng chung', 
-      numberTag: '6', 
-      icon: ShieldCheck,
-      description: 'Phân quyền RBAC, quản lý tài khoản & Audit Logs'
     },
   ];
 
@@ -97,22 +92,22 @@ export default function AppLayout() {
         </div>
 
         {/* Trạng thái HL7/FHIR Gateway */}
-        <div className="mx-4 my-3 rounded-xl bg-slate-800/50 p-3 border border-slate-700/60 flex items-center justify-between text-xs">
-          <div className="flex items-center space-x-2">
+        <div className="mx-4 my-4 rounded-xl bg-slate-800/60 p-3.5 border border-slate-700/60 flex items-center justify-between text-xs shadow-inner">
+          <div className="flex items-center space-x-2.5">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <span className="text-slate-300 font-medium">HL7/FHIR Gateway</span>
+            <span className="text-slate-200 font-semibold">HL7/FHIR Gateway</span>
           </div>
           <span className="rounded bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-800">
             Online
           </span>
         </div>
 
-        {/* Menu Điều hướng (Mục 1, 2, 6) */}
-        <nav className="flex-1 space-y-2 px-4 py-3 overflow-y-auto">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Phân hệ chức năng</p>
+        {/* Menu Điều hướng */}
+        <nav className="flex-1 space-y-3 px-4 py-2 overflow-y-auto">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Phân hệ chuyên môn</p>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -124,20 +119,27 @@ export default function AppLayout() {
                   setSidebarOpen(false);
                 }}
                 className={`
-                  group flex w-full items-start space-x-3 rounded-xl px-3.5 py-3 text-left transition-all
+                  group flex w-full items-center space-x-3 rounded-2xl px-4 py-3.5 text-left transition-all cursor-pointer
                   ${isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25 font-semibold' 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-semibold' 
                     : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'}
                 `}
               >
-                <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400 group-hover:text-blue-400'
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-blue-400 group-hover:bg-slate-700'
                 }`}>
-                  {item.numberTag}
+                  <Icon className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="text-xs leading-snug font-semibold">{item.name}</div>
-                  <div className={`text-[10px] mt-0.5 line-clamp-1 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs leading-snug font-bold truncate">{item.name}</span>
+                    <span className={`ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                      isActive ? 'bg-blue-700 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {item.numberTag}
+                    </span>
+                  </div>
+                  <div className={`text-[10px] mt-1 truncate ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
                     {item.description}
                   </div>
                 </div>
@@ -146,11 +148,22 @@ export default function AppLayout() {
           })}
         </nav>
 
+        {/* Bổ sung Widget Nhắc nhở / Hỗ trợ lâm sàng ở khoảng trống dưới Sidebar */}
+        <div className="mx-4 mb-4 rounded-2xl bg-gradient-to-br from-blue-950/60 to-slate-900 p-4 border border-blue-900/40 text-xs space-y-2">
+          <div className="flex items-center space-x-2 text-blue-400 font-bold">
+            <Stethoscope className="h-4 w-4" />
+            <span>AI-CDSS Trực tuyến</span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Hệ thống hỗ trợ ra quyết định lâm sàng 4 trụ cột GDMT đang hoạt động ổn định.
+          </p>
+        </div>
+
         {/* Sidebar Footer */}
-        <div className="border-t border-slate-800 p-4 bg-slate-950/40 text-xs text-slate-400">
-          <div className="flex justify-between items-center mb-1">
+        <div className="border-t border-slate-800 p-4 bg-slate-950/60 text-xs text-slate-400">
+          <div className="flex justify-between items-center">
             <span>Khoa: <strong className="text-slate-200">Tim mạch</strong></span>
-            <span className="text-[10px] bg-blue-950 text-blue-400 px-1.5 py-0.5 rounded border border-blue-900">Trực chính</span>
+            <span className="text-[10px] bg-blue-950 text-blue-400 px-2 py-0.5 rounded-full font-bold border border-blue-900">Trực chính</span>
           </div>
         </div>
       </aside>
@@ -163,28 +176,22 @@ export default function AppLayout() {
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden cursor-pointer"
             >
               <Menu className="h-6 w-6" />
             </button>
-
-            <div className="relative hidden sm:block w-80 md:w-96">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tra cứu nhanh mã BN, CCCD, Họ tên..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
+            
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hệ thống Quản lý Suy tim</span>
+              <h2 className="text-sm font-bold text-slate-800">Bệnh viện Hữu Nghị • Phòng khám Chuyên khoa</h2>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* 1. NÚT CHUÔNG THÔNG BÁO */}
+            {/* Nút chuông thông báo */}
             <button 
               onClick={() => alert('Trung tâm cảnh báo: Có 2 ca Cảnh báo Đỏ quá tải dịch và 1 ca Cảnh báo Vàng.')}
-              className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition-colors"
+              className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow ring-2 ring-white animate-bounce">
@@ -194,7 +201,7 @@ export default function AppLayout() {
 
             <div className="h-8 w-px bg-slate-200" />
 
-            {/* 2. KHU VỰC TÊN BÁC SĨ & ĐĂNG XUẤT */}
+            {/* Khu vực tên bác sĩ & đăng xuất */}
             <div className="relative">
               <div 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -214,7 +221,7 @@ export default function AppLayout() {
                 <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
 
-              {/* MENU THẢ XUỐNG ĐĂNG XUẤT */}
+              {/* Menu thả xuống đăng xuất */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl py-2 z-50">
                   <div className="px-4 py-2 border-b border-slate-800">
@@ -224,8 +231,8 @@ export default function AppLayout() {
                   
                   <button
                     onClick={() => {
-                      localStorage.clear(); // Xóa sạch token xác thực
-                      window.location.reload(); // Tải lại trang để về màn hình Login
+                      localStorage.clear();
+                      window.location.reload();
                     }}
                     className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
                   >
@@ -236,9 +243,9 @@ export default function AppLayout() {
               )}
             </div>
           </div>
-        </header> {/* <-- ĐÃ THÊM THẺ ĐÓNG HEADER CHUẨN XÁC Ở ĐÂY */}
+        </header>
 
-        {/* 3. VÙNG RENDER NỘI DUNG TƯƠNG ỨNG VỚI TAB ĐANG CHỌN */}
+        {/* 3. VÙNG RENDER NỘI DUNG */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
           {activeTab === 'reception' && (
             <PatientRecordManagement onOpenDoctorDashboard={handleOpenDoctorDashboard} />
@@ -246,10 +253,6 @@ export default function AppLayout() {
 
           {activeTab === 'integration' && (
             <HospitalDataIntegration />
-          )}
-
-          {activeTab === 'admin' && (
-            <AdminSystemDashboard />
           )}
         </main>
 

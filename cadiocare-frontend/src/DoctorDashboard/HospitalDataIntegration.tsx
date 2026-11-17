@@ -132,7 +132,6 @@ const INITIAL_PACKETS: IngestionPacket[] = [
   },
 ];
 
-// ĐÃ THÊM 'export default' Ở ĐẦU HÀM CHÍNH ĐỂ KHÔNG BỊ LỖI KHI IMPORT
 export default function HospitalDataIntegration() {
   const [sources, setSources] = useState<HospitalSourceSystem[]>(INITIAL_SOURCES);
   const [packets, setPackets] = useState<IngestionPacket[]>(INITIAL_PACKETS);
@@ -146,7 +145,6 @@ export default function HospitalDataIntegration() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Nút [Chuẩn hóa lại] để xử lý lỗi gói tin (Use Case 2.3)
   const handleReprocessPacket = (packetId: string) => {
     setPackets((prev) =>
       prev.map((pkt) => {
@@ -164,7 +162,6 @@ export default function HospitalDataIntegration() {
     showToast(`Đã đối chiếu, làm sạch và chuẩn hóa lại gói ${packetId} thành công!`);
   };
 
-  // Lọc dữ liệu hiển thị trên bảng Ingestion Log
   const filteredPackets = packets.filter((pkt) => {
     const matchSearch =
       pkt.patientCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -178,7 +175,6 @@ export default function HospitalDataIntegration() {
   return (
     <div className="space-y-6 font-sans text-slate-800 antialiased">
       
-      {/* Toast thông báo hệ thống */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-3 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm text-white shadow-2xl border border-slate-700">
           <CheckCircle2 className="h-5 w-5 text-emerald-400" />
@@ -186,7 +182,6 @@ export default function HospitalDataIntegration() {
         </div>
       )}
 
-      {/* 1. TIÊU ĐỀ PHÂN HỆ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
@@ -204,14 +199,13 @@ export default function HospitalDataIntegration() {
 
         <button
           onClick={() => showToast('Đang làm mới trạng thái kết nối Socket với các hệ thống viện...')}
-          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <RefreshCw className="mr-2 h-3.5 w-3.5 text-slate-500" />
           Làm mới kết nối
         </button>
       </div>
 
-      {/* 2. KHỐI TRẠNG THÁI KẾT NỐI THỜI GIAN THỰC (REAL-TIME STATUS) CỦA 3 HỆ THỐNG NGUỒN */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {sources.map((src) => (
           <div
@@ -260,10 +254,8 @@ export default function HospitalDataIntegration() {
         ))}
       </div>
 
-      {/* 3. BẢNG 'NHẬT KÝ TIẾP NHẬN DỮ LIỆU' (INGESTION LOG) */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
         
-        {/* Bộ lọc và Tìm kiếm */}
         <div className="flex flex-col md:flex-row justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-center space-x-2">
             <Activity className="h-5 w-5 text-teal-600" />
@@ -290,7 +282,7 @@ export default function HospitalDataIntegration() {
             <select
               value={filterSource}
               onChange={(e) => setFilterSource(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Mọi nguồn viện</option>
               <option value="HIS/EMR">HIS/EMR</option>
@@ -301,7 +293,7 @@ export default function HospitalDataIntegration() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Mọi trạng thái</option>
               <option value="STANDARDIZED">Đã chuẩn hóa (211 biến)</option>
@@ -311,7 +303,6 @@ export default function HospitalDataIntegration() {
           </div>
         </div>
 
-        {/* Bảng dữ liệu chính */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-100/70 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
@@ -335,7 +326,6 @@ export default function HospitalDataIntegration() {
                 filteredPackets.map((pkt) => (
                   <tr key={pkt.id} className="hover:bg-slate-50/80 transition-colors">
                     
-                    {/* Mã gói & thời gian */}
                     <td className="px-4 py-3.5">
                       <div className="font-mono font-bold text-slate-900">{pkt.id}</div>
                       <div className="text-[11px] text-slate-400 flex items-center mt-0.5">
@@ -344,7 +334,6 @@ export default function HospitalDataIntegration() {
                       </div>
                     </td>
 
-                    {/* Nguồn dữ liệu */}
                     <td className="px-4 py-3.5">
                       <span className="font-bold text-slate-800">{pkt.source}</span>
                       <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
@@ -352,13 +341,11 @@ export default function HospitalDataIntegration() {
                       </span>
                     </td>
 
-                    {/* Bệnh nhân */}
                     <td className="px-4 py-3.5">
                       <div className="font-bold text-slate-900">{pkt.patientName}</div>
                       <div className="font-mono text-[11px] text-teal-700">{pkt.patientCode}</div>
                     </td>
 
-                    {/* Nội dung gói tin & Thông báo lỗi */}
                     <td className="px-6 py-3.5 max-w-md">
                       <p className="text-slate-800 font-medium">{pkt.dataSummary}</p>
                       {pkt.errorMessage && (
@@ -369,7 +356,6 @@ export default function HospitalDataIntegration() {
                       )}
                     </td>
 
-                    {/* Trạng thái chuẩn hóa dữ liệu */}
                     <td className="px-4 py-3.5 text-center">
                       {pkt.status === 'STANDARDIZED' && (
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
@@ -391,14 +377,13 @@ export default function HospitalDataIntegration() {
                       )}
                     </td>
 
-                    {/* Nút [Chuẩn hóa lại] để xử lý lỗi */}
                     <td className="px-4 py-3.5 text-right">
                       {pkt.status === 'STANDARDIZED' ? (
                         <span className="text-[11px] text-slate-400 font-medium">Hoàn tất</span>
                       ) : (
                         <button
                           onClick={() => handleReprocessPacket(pkt.id)}
-                          className="inline-flex items-center rounded-xl bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm hover:bg-amber-600 transition-colors"
+                          className="inline-flex items-center rounded-xl bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm hover:bg-amber-600 transition-colors cursor-pointer"
                         >
                           <RefreshCw className="mr-1.5 h-3 w-3" />
                           Chuẩn hóa lại

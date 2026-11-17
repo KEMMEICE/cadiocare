@@ -13,7 +13,10 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   XCircle,
-  UserPlus
+  UserPlus,
+  Database,
+  Download, // Đã đổi chuẩn xác từ CloudArrowDown sang Download
+  Check
 } from 'lucide-react';
 
 // --- ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
@@ -171,8 +174,15 @@ const RBAC_MATRIX = [
   { module: 'Xem nhật ký kiểm toán hệ thống (Audit Logs)', doctor: false, nurse: false, patient: false, admin: true, note: 'Quản trị viên giám sát an toàn vận hành' },
 ];
 
+// Danh sách mẫu bệnh án (Tiểu mục 6.3)
+const MEDICAL_TEMPLATES = [
+  { id: 'tpl-01', code: 'HF-OUTPATIENT-V2', name: 'Mẫu Bệnh Án Ngoại Trú Suy Tim Chuyên Sâu', version: 'v2.4', updated: '15/10/2026', status: 'Đang áp dụng' },
+  { id: 'tpl-02', code: 'HF-DISCHARGE-SUMMARY', name: 'Mẫu Tóm Tắt Hồ Sơ Ra Viện & Hướng Dẫn Điều Trị', version: 'v1.8', updated: '10/09/2026', status: 'Đang áp dụng' },
+  { id: 'tpl-03', code: 'AI-CDSS-REC-FORM', name: 'Mẫu Ghi Nhận Quyết Định Phê Duyệt / Ghi Đè AI', version: 'v3.0', updated: '20/10/2026', status: 'Bản nháp' },
+];
+
 export default function AdminSystemDashboard() {
-  const [activeTab, setActiveTab] = useState<'users' | 'rbac' | 'audit'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'rbac' | 'audit' | 'templates' | 'backup'>('users');
   const [users, setUsers] = useState<SystemUser[]>(INITIAL_USERS);
   const [logs] = useState<AuditLogItem[]>(INITIAL_LOGS);
   
@@ -236,51 +246,75 @@ export default function AdminSystemDashboard() {
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Quản lý tài khoản người dùng, phân quyền RBAC và tra cứu vết nhật ký kiểm toán y tế (Audit Logs).
+            Quản lý tài khoản, phân quyền RBAC, mẫu bệnh án chuẩn, nhật ký kiểm toán y tế (Audit Logs) và cơ chế backup tự động.
           </p>
         </div>
       </div>
 
-      {/* 2. THANH CHUYỂN ĐỔI TABS CHÍNH */}
-      <div className="flex space-x-2 border-b border-slate-200">
+      {/* 2. THANH CHUYỂN ĐỔI TABS CHÍNH (Đã nâng cấp lên 5 tabs khớp 100% sơ đồ phân cấp 6.1 đến 6.5) */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab('users')}
-          className={`flex items-center space-x-2 border-b-2 px-4 py-3 text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold transition-all rounded-xl cursor-pointer ${
             activeTab === 'users'
-              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Users className="h-4 w-4" />
-          <span>Quản Lý Người Dùng ({users.length})</span>
+          <span>6.1 Người Dùng ({users.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('rbac')}
-          className={`flex items-center space-x-2 border-b-2 px-4 py-3 text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold transition-all rounded-xl cursor-pointer ${
             activeTab === 'rbac'
-              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
           }`}
         >
           <KeyRound className="h-4 w-4" />
-          <span>Phân Quyền Hệ Thống (RBAC)</span>
+          <span>6.2 Phân Quyền RBAC</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('templates')}
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold transition-all rounded-xl cursor-pointer ${
+            activeTab === 'templates'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>6.3 Mẫu Bệnh Án</span>
         </button>
 
         <button
           onClick={() => setActiveTab('audit')}
-          className={`flex items-center space-x-2 border-b-2 px-4 py-3 text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold transition-all rounded-xl cursor-pointer ${
             activeTab === 'audit'
-              ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
           }`}
         >
           <History className="h-4 w-4" />
-          <span>Nhật Ký Kiểm Toán (Audit Logs)</span>
+          <span>6.4 Nhật Ký Audit</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('backup')}
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-bold transition-all rounded-xl cursor-pointer ${
+            activeTab === 'backup'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Database className="h-4 w-4" />
+          <span>6.5 Sao Lưu / Backup</span>
         </button>
       </div>
 
-      {/* ================= TAB 1: QUẢN LÝ NGƯỜI DÙNG ================= */}
+      {/* ================= TAB 1: QUẢN LÝ NGƯỜI DÙNG (6.1) ================= */}
       {activeTab === 'users' && (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col md:flex-row justify-between gap-3 items-center">
@@ -301,7 +335,7 @@ export default function AdminSystemDashboard() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none"
+                className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Tất cả vai trò</option>
                 <option value="DOCTOR">Bác sĩ (Doctor)</option>
@@ -328,7 +362,7 @@ export default function AdminSystemDashboard() {
                   <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-900 text-sm">{u.fullName}</div>
-                      <div className="font-mono text-indigo-600">{u.username} • {u.email}</div>
+                      <div className="font-mono text-indigo-600 font-medium mt-0.5">{u.username} • <span className="text-slate-400">{u.email}</span></div>
                     </td>
                     <td className="px-4 py-4 font-semibold">
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
@@ -354,7 +388,7 @@ export default function AdminSystemDashboard() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleToggleLockUser(u.id)}
-                        className={`inline-flex items-center rounded-xl px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors ${
+                        className={`inline-flex items-center rounded-xl px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors cursor-pointer ${
                           u.isActive ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
                         }`}
                       >
@@ -370,7 +404,7 @@ export default function AdminSystemDashboard() {
         </div>
       )}
 
-      {/* ================= TAB 2: PHÂN QUYỀN RBAC ================= */}
+      {/* ================= TAB 2: PHÂN QUYỀN RBAC (6.2) ================= */}
       {activeTab === 'rbac' && (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div>
@@ -415,7 +449,65 @@ export default function AdminSystemDashboard() {
         </div>
       )}
 
-      {/* ================= TAB 3: NHẬT KÝ KIỂM TOÁN (AUDIT LOGS) ================= */}
+      {/* ================= TAB 3: QUẢN LÝ MẪU BỆNH ÁN (6.3) ================= */}
+      {activeTab === 'templates' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Quản Lý Các Mẫu Bệnh Án Chuẩn (Medical Record Templates)</h3>
+              <p className="text-xs text-slate-500">Cấu hình form nhập liệu chuyên khoa suy tim chuẩn hóa theo Bộ Y tế và định dạng AI-CDSS.</p>
+            </div>
+            <button 
+              onClick={() => showToast('Đang mở form tạo mẫu bệnh án mới...')}
+              className="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-indigo-700 cursor-pointer"
+            >
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+              Tạo mẫu mới
+            </button>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-100/70 text-xs font-bold uppercase text-slate-600 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-3.5">Mã Mẫu & Tên Biểu Mẫu</th>
+                  <th className="px-4 py-3.5">Phiên Bản</th>
+                  <th className="px-4 py-3.5">Cập Nhật Gần Nhất</th>
+                  <th className="px-4 py-3.5 text-center">Trạng Thái</th>
+                  <th className="px-6 py-3.5 text-right">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {MEDICAL_TEMPLATES.map((tpl) => (
+                  <tr key={tpl.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-900 text-sm">{tpl.name}</div>
+                      <div className="font-mono text-indigo-600 font-medium mt-0.5">{tpl.code}</div>
+                    </td>
+                    <td className="px-4 py-4 font-mono font-bold text-slate-700">{tpl.version}</td>
+                    <td className="px-4 py-4 text-slate-600">{tpl.updated}</td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                        {tpl.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => showToast(`Đang tải cấu hình mẫu ${tpl.code} để chỉnh sửa...`)}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cấu hình
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 4: NHẬT KÝ KIỂM TOÁN / AUDIT LOGS (6.4) ================= */}
       {activeTab === 'audit' && (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between">
@@ -429,7 +521,7 @@ export default function AdminSystemDashboard() {
               <select
                 value={logSeverityFilter}
                 onChange={(e) => setLogSeverityFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Mọi mức độ cảnh báo</option>
                 <option value="INFO">INFO (Thông tin)</option>
@@ -479,6 +571,67 @@ export default function AdminSystemDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 5: SAO LƯU / BACKUP HỆ THỐNG (6.5) ================= */}
+      {activeTab === 'backup' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Quản Lý Sao Lưu & Phục Hồi Dữ Liệu (Backup & Restore)</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Cơ chế backup tự động định kỳ cơ sở dữ liệu bệnh án suy tim và lịch sử AI-CDSS tại Bệnh viện Hữu Nghị.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <span className="text-xs text-slate-500 font-bold uppercase">Trạng thái tự động</span>
+                <div className="text-base font-bold text-emerald-600 flex items-center">
+                  <Check className="w-5 h-5 mr-1.5" /> Đang hoạt động (Cron Job)
+                </div>
+                <p className="text-[11px] text-slate-400">Lịch trình: Tự động backup toàn bộ DB lúc 02:00 AM hàng ngày.</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <span className="text-xs text-slate-500 font-bold uppercase">Dung lượng bản backup</span>
+                <div className="text-base font-bold text-slate-800">4.8 GB / 50 GB Storage</div>
+                <p className="text-[11px] text-slate-400">Lưu trữ an toàn trên Cloud Server mã hóa AES-256.</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between">
+                <span className="text-xs text-slate-500 font-bold uppercase">Thao tác thủ công</span>
+                <button
+                  onClick={() => showToast('Đang tiến hành tạo bản sao lưu thủ công (Full Backup)...')}
+                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-indigo-700 cursor-pointer"
+                >
+                  <Download className="mr-1.5 h-4 w-4" />
+                  Tạo bản Backup Ngay
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 mt-4">
+              <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Lịch sử các bản Backup gần đây</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                  <div>
+                    <span className="font-bold text-slate-800">Cadiocare_Full_Backup_20261028_0200.sql.gz</span>
+                    <span className="block text-[10px] text-slate-400">Hôm nay, 02:00 AM • Tự động hóa hệ thống</span>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-700">Thành công (4.8 GB)</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                  <div>
+                    <span className="font-bold text-slate-800">Cadiocare_Full_Backup_20261027_0200.sql.gz</span>
+                    <span className="block text-[10px] text-slate-400">Hôm qua, 02:00 AM • Tự động hóa hệ thống</span>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-700">Thành công (4.7 GB)</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

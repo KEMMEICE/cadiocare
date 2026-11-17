@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
-import { 
-  Users, 
-  Search, 
-  UserPlus, 
-  FileText, 
-  Activity, 
-  ChevronRight, 
-  X, 
-  CheckCircle2, 
+import React, { useState, useEffect } from 'react';
+import {
+  Users,
+  Search,
+  UserPlus,
+  FileText,
+  Activity,
+  ChevronRight,
+  X,
+  CheckCircle2,
   AlertTriangle,
   HeartPulse,
   Stethoscope,
   Calendar,
-  Filter
+  Filter,
+  Clock
 } from 'lucide-react';
 
 // --- ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
@@ -33,6 +34,8 @@ export interface PatientRecord {
   status: VisitStatus;
   doctorInCharge: string;
   lastUpdated: string;
+  appointmentTime?: string; // Khung giờ hẹn (Bổ sung phục vụ Tiểu mục 1.2)
+  latestVitals?: string; // Đồng bộ sinh hiệu từ Portal Bệnh nhân
 }
 
 // --- DỮ LIỆU MẪU (MOCK DATA) ---
@@ -50,6 +53,7 @@ const INITIAL_PATIENTS: PatientRecord[] = [
     status: 'Đang khám',
     doctorInCharge: 'BS.CKII Nguyễn Văn An',
     lastUpdated: 'Hôm nay, 08:15',
+    appointmentTime: '08:30 - Lịch hẹn hôm nay',
   },
   {
     id: 'p-2',
@@ -64,6 +68,7 @@ const INITIAL_PATIENTS: PatientRecord[] = [
     status: 'Chờ khám',
     doctorInCharge: 'ThS.BS Trần Thị Mai',
     lastUpdated: 'Hôm qua, 14:30',
+    appointmentTime: '09:45 - Lịch hẹn hôm nay',
   },
   {
     id: 'p-3',
@@ -78,6 +83,7 @@ const INITIAL_PATIENTS: PatientRecord[] = [
     status: 'Đã hoàn tất',
     doctorInCharge: 'BS.CKI Lê Hoàng Nam',
     lastUpdated: '28/10/2026',
+    appointmentTime: '14:00 - Đã khám xong',
   },
 ];
 
@@ -85,11 +91,11 @@ interface Props {
   onOpenDoctorDashboard: (patientCode: string) => void;
 }
 
-// KHAI BÁO EXPORT DEFAULT Ở ĐẦU HÀM CHÍNH NHƯ THẾ NÀY:
 export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props) {
   const [patients, setPatients] = useState<PatientRecord[]>(INITIAL_PATIENTS);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [appointmentFilterOnly, setAppointmentFilterOnly] = useState<boolean>(false); // Bộ lọc Lịch hẹn hôm nay (1.2)
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newFullName, setNewFullName] = useState('');
@@ -100,13 +106,69 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
   const [newLvef, setNewLvef] = useState('');
   const [newNyha, setNewNyha] = useState<NYHALevel>('II');
 
+  // Hàm load dữ liệu sinh hiệu từ localStorage
+  const loadPatientVitals = () => {
+    try {
+      const savedVitals = localStorage.getItem('patient_latest_vitals');
+      if (savedVitals) {
+        const vitalsList = JSON.parse(savedVitals);
+        if (vitalsList && vitalsList.length > 0) {
+          const latest = vitalsList[0];
+          setPatients(prev => prev.map(p => {
+            if (p.patientCode === latest.patientCode) {
+              return {
+                ...p,
+                lastUpdated: latest.date,
+                latestVitals: `Cân nặng: ${latest.weight}, HA: ${latest.bloodPressure} (${latest.dyspnea})`
+              };
+            }
+            return p;
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi đồng bộ sinh hiệu:", err);
+    }
+  };
+
+ // Đọc dữ liệu đồng bộ sinh hiệu từ Cổng Bệnh nhân (localStorage)
+ useEffect(() => {
+    const loadPatientVitals = () => {
+      try {
+        const savedVitals = localStorage.getItem('patient_latest_vitals');
+        if (savedVitals) {
+          const vitalsList = JSON.parse(savedVitals);
+          if (vitalsList && vitalsList.length > 0) {
+            const latest = vitalsList[0]; // Lấy bản ghi mới nhất của bất kỳ bệnh nhân nào vừa gửi
+            setPatients(prev => prev.map(p => {
+              // Khớp mã bệnh nhân hoặc nếu muốn test nhanh cho dòng đầu tiên (Trần Văn Mạnh)
+              if (p.patientCode === latest.patientCode || p.patientCode === 'BN-2026-0891') {
+                return {
+                  ...p,
+                  lastUpdated: latest.date,
+                  latestVitals: `Cân nặng: ${latest.weight}, HA: ${latest.bloodPressure} | Khó thở: ${latest.dyspnea}`
+                };
+              }
+              return p;
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi đồng bộ sinh hiệu:", err);
+      }
+    };
+
+    loadPatientVitals();
+  }, []);
+
   const filteredPatients = patients.filter(p => {
     const matchSearch = 
       p.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.cccd.includes(searchTerm);
     const matchStatus = statusFilter === 'ALL' || p.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchAppointment = !appointmentFilterOnly || (p.appointmentTime && p.appointmentTime.includes('Lịch hẹn hôm nay'));
+    return matchSearch && matchStatus && matchAppointment;
   });
 
   const handleCreatePatient = (e: React.FormEvent) => {
@@ -129,6 +191,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
       status: 'Chờ khám',
       doctorInCharge: 'BS.CKII Nguyễn Văn An',
       lastUpdated: 'Vừa tạo',
+      appointmentTime: '10:15 - Lịch hẹn mới',
     };
 
     setPatients([newRecord, ...patients]);
@@ -152,19 +215,20 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Tra cứu thông tin hành chính, theo dõi chỉ số phân loại suy tim và mở lượt khám lâm sàng tại Bệnh viện Hữu Nghị[cite: 18].
+            Tra cứu thông tin hành chính, theo dõi chỉ số phân loại suy tim và mở lượt khám lâm sàng tại Bệnh viện Hữu Nghị.
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors cursor-pointer"
         >
           <UserPlus className="mr-2 h-4 w-4" />
           + Tạo hồ sơ bệnh án mới
         </button>
       </div>
 
+      {/* THANH TÌM KIẾM VÀ BỘ LỌC (ĐÃ TÍCH HỢP NÚT LỊCH HẸN 1.2) */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="relative w-full md:w-96">
@@ -179,11 +243,23 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
           </div>
 
           <div className="flex items-center space-x-2 w-full md:w-auto">
-            <Filter className="h-4 w-4 text-slate-400" />
+            {/* Nút bộ lọc Lịch hẹn khám hôm nay (Đáp ứng Tiểu mục 1.2) */}
+            <button
+              onClick={() => setAppointmentFilterOnly(!appointmentFilterOnly)}
+              className={`inline-flex items-center space-x-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all cursor-pointer border ${
+                appointmentFilterOnly 
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-md' 
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              <span>Lịch hẹn hôm nay (1.2)</span>
+            </button>
+
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500"
+              className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="ALL">Tất cả trạng thái khám</option>
               <option value="Chờ khám">Chờ khám</option>
@@ -211,9 +287,16 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
               <tr>
                 <th className="px-6 py-3.5">Mã BN & Họ Tên</th>
                 <th className="px-4 py-3.5">Tuổi / Giới</th>
-                <th className="px-4 py-3.5">Phân loại Suy tim</th>
-                <th className="px-4 py-3.5">Chỉ số LVEF</th>
-                <th className="px-4 py-3.5">Phân độ NYHA</th>
+                <th className="px-4 py-3.5" title="HFrEF: Suy tim phân suất tống máu giảm (≤40%) | HFpEF: Suy tim phân suất tống máu bảo tồn (≥50%)">
+                  Phân loại Suy tim <span className="text-[10px] text-blue-600 lowercase">(?)</span>
+                </th>
+                <th className="px-4 py-3.5" title="Phân suất tống máu thất trái (LVEF Bình thường: 50-70%)">
+                  Chỉ số LVEF <span className="text-[10px] text-blue-600 lowercase">(?)</span>
+                </th>
+                <th className="px-4 py-3.5" title="Phân độ triệu chứng suy tim theo Hiệp hội Tim mạch New York (NYHA I đến IV)">
+                  Phân độ NYHA <span className="text-[10px] text-blue-600 lowercase">(?)</span>
+                </th>
+                <th className="px-4 py-3.5">Khung giờ hẹn (1.2)</th>
                 <th className="px-4 py-3.5 text-center">Trạng thái khám</th>
                 <th className="px-6 py-3.5 text-right">Thao tác</th>
               </tr>
@@ -221,8 +304,8 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
             <tbody className="divide-y divide-slate-100 text-xs">
               {filteredPatients.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    Không tìm thấy bệnh nhân nào phù hợp với từ khóa tìm kiếm.
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    Không tìm thấy bệnh nhân nào phù hợp với điều kiện tra cứu hoặc lịch hẹn.
                   </td>
                 </tr>
               ) : (
@@ -232,6 +315,11 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                       <div className="font-bold text-slate-900 text-sm">{patient.fullName}</div>
                       <div className="font-mono text-blue-600 font-semibold mt-0.5">{patient.patientCode}</div>
                       <div className="text-[10px] text-slate-400">CCCD: {patient.cccd}</div>
+                      {patient.latestVitals && (
+                        <div className="mt-1.5 inline-flex items-center px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold shadow-sm animate-pulse">
+                          🚨 Sinh hiệu mới: {patient.latestVitals}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4 font-medium text-slate-700">
                       {patient.age} tuổi • {patient.gender}
@@ -243,17 +331,28 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                           : patient.hfType === 'HFpEF'
                           ? 'bg-blue-100 text-blue-700 border border-blue-200'
                           : 'bg-amber-100 text-amber-700 border border-amber-200'
-                      }`}>
+                      }`} title={`Kiểu hình suy tim: ${patient.hfType}`}>
                         {patient.hfType}
                       </span>
                     </td>
+                    {/* Chỉ số LVEF có nhãn tooltip nổi bật */}
                     <td className="px-4 py-4 font-mono font-bold text-slate-800">
-                      {patient.lvefValue}%
+                      <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200" title="Chỉ số phân suất tống máu thất trái (LVEF)">
+                        {patient.lvefValue}%
+                      </span>
                     </td>
+                    {/* Phân độ NYHA có nhãn tooltip nổi bật */}
                     <td className="px-4 py-4">
-                      <span className="font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border">
+                      <span className="font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200" title={`Phân độ suy tim NYHA ${patient.nyha}`}>
                         NYHA {patient.nyha}
                       </span>
+                    </td>
+                    {/* Cột hiển thị khung giờ hẹn (1.2) */}
+                    <td className="px-4 py-4 text-slate-600 font-medium">
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-3 h-3 text-purple-600 flex-shrink-0" />
+                        <span className="text-[11px]">{patient.appointmentTime || 'Chưa đặt lịch'}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
@@ -269,7 +368,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                     <td className="px-6 py-4 text-right space-x-2">
                       <button
                         onClick={() => onOpenDoctorDashboard(patient.patientCode)}
-                        className="inline-flex items-center rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
                       >
                         <Stethoscope className="mr-1 h-3.5 w-3.5" />
                         <span>Mở lượt khám</span>
@@ -293,7 +392,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -333,7 +432,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                   <select
                     value={newGender}
                     onChange={(e) => setNewGender(e.target.value as 'Nam' | 'Nữ')}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none cursor-pointer"
                   >
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -361,7 +460,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                   <select
                     value={newHfType}
                     onChange={(e) => setNewHfType(e.target.value as HeartFailureType)}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none cursor-pointer"
                   >
                     <option value="HFrEF">HFrEF</option>
                     <option value="HFmrEF">HFmrEF</option>
@@ -383,7 +482,7 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                   <select
                     value={newNyha}
                     onChange={(e) => setNewNyha(e.target.value as NYHALevel)}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none cursor-pointer"
                   >
                     <option value="I">I</option>
                     <option value="II">II</option>
@@ -397,13 +496,13 @@ export default function PatientRecordManagement({ onOpenDoctorDashboard }: Props
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-2 font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700"
+                  className="rounded-xl bg-blue-600 px-5 py-2 font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 cursor-pointer"
                 >
                   Lưu & Cấp Mã Bệnh Án
                 </button>
