@@ -31,11 +31,14 @@ export default function App() {
 
   // Nếu đã đăng nhập thành công -> Phân quyền giao diện theo vai trò (RBAC)
   if (isAuthenticated) {
+    // Chuẩn hóa role về chữ hoa để tránh lỗi lệch định dạng (patient -> PATIENT)
+    const normalizedRole = userRole ? userRole.toUpperCase() : '';
+
     return (
       <div className="App">
-        {userRole === 'PATIENT' ? (
+        {normalizedRole === 'PATIENT' ? (
           <PatientPortal />
-        ) : userRole === 'ADMIN' ? (
+        ) : normalizedRole === 'ADMIN' ? (
           <AdminPortal />
         ) : (
           <AppLayout />
