@@ -19,7 +19,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }: LoginProps
 
     try {
       // 1. Cố gắng gọi API đăng nhập tới Backend FastAPI
-      const response = await fetch('http://localhost:8000/api/auth/login', {
+      const response = await fetch('http://cadiocare-2.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
