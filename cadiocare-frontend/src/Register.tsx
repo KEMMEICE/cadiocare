@@ -30,7 +30,7 @@ export default function Register({ onRegisterSuccess, onSwitchToLogin }: Registe
 
     try {
       // 1. Thử gọi API đăng ký tới Backend FastAPI
-      const response = await fetch('http://cadiocare-2.onrender.com/api/auth/register', {
+      const response = await fetch('https://cadiocare-2.onrender.com/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
